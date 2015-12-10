@@ -1,0 +1,5 @@
+language: C
+script:
+  - gcc -Wall sw.c -DTEST
+  - ./a.out
+
