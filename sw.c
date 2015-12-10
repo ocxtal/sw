@@ -42,8 +42,8 @@ sw_linear(
 		for(uint64_t i = 1; i < alen+1; i++) {
 			int16_t score = ptr[a(i, j)] = MAX4(0,
 				ptr[a(i - 1, j - 1)] + s(i, j),
-				ptr[a(i, j - 1)] + gi,
-				ptr[a(i - 1, j)] + gi);
+				ptr[a(i, j - 1)] + ge,
+				ptr[a(i - 1, j)] + ge);
 			max = MAX2(max, score);
 		}
 	}
@@ -128,7 +128,10 @@ void test_linear_1_1_1(void)
 	assert( 1 == l("A", "A"));
 	assert( 3 == l("AAA", "AAA"));
 	assert( 0 == l("AAA", "TTT"));
-	assert( 3 == l("TTTAAATTT", "TTTTTTTTTTTT"));
+	assert( 3 == l("GGGAAAGGG", "TTTTTTAAATTTTTT"));
+
+	assert( 5 == l("GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
+	assert( 4 == l("GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
 	#undef l
 }
 
@@ -140,7 +143,10 @@ void test_affine_1_1_1(void)
 	assert( 1 == a("A", "A"));
 	assert( 3 == a("AAA", "AAA"));
 	assert( 0 == a("AAA", "TTT"));
-	assert( 3 == a("TTTAAATTT", "TTTTTTTTTTTT"));
+	assert( 3 == a("GGGAAAGGG", "TTTTTTAAATTTTTT"));
+
+	assert( 4 == a("GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
+	assert( 3 == a("GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
 	#undef a
 }
 
