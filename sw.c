@@ -4,6 +4,7 @@
  *
  * @brief full Smith-Waterman
  */
+#include "sw.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +18,7 @@
 /**
  * @fn sw_linear
  */
-int
-sw_linear(
+sw_result_t sw_linear(
 	char const *a,
 	uint64_t alen,
 	char const *b,
@@ -51,14 +51,13 @@ sw_linear(
 
 	#undef a
 	#undef s
-	return(max);
+	return((sw_result_t){ .score = max });
 }
 
 /**
  * @fn sw_affine
  */
-int
-sw_affine(
+sw_result_t sw_affine(
 	char const *a,
 	uint64_t alen,
 	char const *b,
@@ -104,7 +103,7 @@ sw_affine(
 	#undef f
 	#undef e
 	#undef s
-	return(max);
+	return((sw_result_t){ .score = max });
 }
 
 #ifdef TEST
@@ -122,7 +121,7 @@ static int8_t const t[][5] = {
 
 void test_linear_1_1_1(void)
 {
-	#define l(p, q)		_linear(p, q, t[0])
+	#define l(p, q)		_linear(p, q, t[0]).score
 	assert( 0 == l("", ""));
 	assert( 0 == l("A", ""));
 	assert( 1 == l("A", "A"));
@@ -137,7 +136,7 @@ void test_linear_1_1_1(void)
 
 void test_affine_1_1_1(void)
 {
-	#define a(p, q)		_affine(p, q, t[0])
+	#define a(p, q)		_affine(p, q, t[0]).score
 	assert( 0 == a("", ""));
 	assert( 0 == a("A", ""));
 	assert( 1 == a("A", "A"));
@@ -158,9 +157,6 @@ int main(void)
 }
 #endif
 
-
-
-
-
-
-
+/**
+ * end of sw.c
+ */
