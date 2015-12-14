@@ -15,6 +15,12 @@
 #define MAX3(p, q, r)		( MAX2(p, MAX2(q, r)) )
 #define MAX4(p, q, r, s)	( MAX2(MAX2(p, q), MAX2(r, s)) )
 
+typedef struct _maxpos {
+	int16_t score;
+	uint64_t apos;
+	uint64_t bpos;
+} maxpos_t;
+
 /**
  * @fn sw_linear
  */
@@ -31,27 +37,64 @@ sw_result_t sw_linear(
 
 	int16_t *mat = (int16_t *)malloc(
 		(alen + 1) * (blen + 1) * sizeof(int16_t));
-	int16_t *ptr = mat;
 
 	/* init */
-	int16_t max = ptr[a(0, 0)] = 0;
-	for(uint64_t i = 1; i < alen+1; i++) { ptr[a(i, 0)] = 0; }
-	for(uint64_t j = 1; j < blen+1; j++) { ptr[a(0, j)] = 0; }
+	maxpos_t max = { 0, 0, 0 };
+	mat[a(0, 0)] = 0;
+	for(uint64_t i = 1; i < alen+1; i++) { mat[a(i, 0)] = 0; }
+	for(uint64_t j = 1; j < blen+1; j++) { mat[a(0, j)] = 0; }
 
 	for(uint64_t j = 1; j < blen+1; j++) {
 		for(uint64_t i = 1; i < alen+1; i++) {
-			int16_t score = ptr[a(i, j)] = MAX4(0,
-				ptr[a(i - 1, j - 1)] + s(i, j),
-				ptr[a(i, j - 1)] + ge,
-				ptr[a(i - 1, j)] + ge);
-			max = MAX2(max, score);
+			int16_t score = mat[a(i, j)] = MAX4(0,
+				mat[a(i - 1, j - 1)] + s(i, j),
+				mat[a(i, j - 1)] + ge,
+				mat[a(i - 1, j)] + ge);
+			if(score >= max.score) { max = (maxpos_t){ score, i, j }; }
 		}
 	}
+	if(max.score == 0) { max = (maxpos_t){ 0, 0, 0 }; }
+
+	sw_result_t result = {
+		.score = max.score,
+		.apos = max.apos,
+		.bpos = max.bpos,
+		.path_length = max.apos + max.bpos + 1,
+		.path = malloc(max.apos + max.bpos + 1)
+	};
+	uint32_t path_index = max.apos + max.bpos + 1;
+	while(max.apos != 0 && max.bpos != 0) {
+		if(mat[a(max.apos, max.bpos)] == mat[a(max.apos, max.bpos - 1)] + ge) {
+			max.bpos--;
+			result.path[--path_index] = 'I';
+		} else if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos)] + ge) {
+			max.apos--;
+			result.path[--path_index] = 'D';
+		} else {
+			if(mat[a(max.apos, max.bpos)] == 0) {
+				break;
+			}
+			if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos - 1)] + x) {
+				result.path[--path_index] = 'X';
+			} else {
+				result.path[--path_index] = 'M';
+			}
+			max.apos--;
+			max.bpos--;
+		}
+	}
+
+	result.path_length -= path_index;
+	for(uint64_t i = 0; i < result.path_length; i++) {
+		result.path[i] = result.path[path_index++];
+	}
+	result.path[result.path_length] = '\0';
+
 	free(mat);
 
 	#undef a
 	#undef s
-	return((sw_result_t){ .score = max });
+	return(result);
 }
 
 /**
@@ -72,38 +115,83 @@ sw_result_t sw_affine(
 
 	int16_t *mat = (int16_t *)malloc(
 		3 * (alen + 1) * (blen + 1) * sizeof(int16_t));
-	int16_t *ptr = mat;
 
 	/* init */
-	int16_t max = ptr[a(0, 0)] = ptr[f(0, 0)] = ptr[e(0, 0)] = 0;
+	maxpos_t max = { 0, 0, 0 };
+	mat[a(0, 0)] = mat[f(0, 0)] = mat[e(0, 0)] = 0;
 	for(uint64_t i = 1; i < alen+1; i++) {
-		ptr[a(i, 0)] = ptr[f(i, 0)] = ptr[e(i, 0)] = 0;
+		mat[a(i, 0)] = mat[f(i, 0)] = mat[e(i, 0)] = 0;
 	}
 	for(uint64_t j = 1; j < blen+1; j++) {
-		ptr[a(0, j)] = ptr[f(0, j)] = ptr[e(0, j)] = 0;
+		mat[a(0, j)] = mat[f(0, j)] = mat[e(0, j)] = 0;
 	}
 
 	for(uint64_t j = 1; j < blen+1; j++) {
 		for(uint64_t i = 1; i < alen+1; i++) {
-			int16_t score_f = ptr[f(i, j)] = MAX2(
-				ptr[a(i - 1, j)] + gi + ge,
-				ptr[f(i - 1, j)] + ge);
-			int16_t score_e = ptr[e(i, j)] = MAX2(
-				ptr[a(i, j - 1)] + gi + ge,
-				ptr[e(i, j - 1)] + ge);
-			int16_t score = ptr[a(i, j)] = MAX4(0,
-				ptr[a(i - 1, j - 1)] + s(i, j),
+			int16_t score_f = mat[f(i, j)] = MAX2(
+				mat[a(i - 1, j)] + gi + ge,
+				mat[f(i - 1, j)] + ge);
+			int16_t score_e = mat[e(i, j)] = MAX2(
+				mat[a(i, j - 1)] + gi + ge,
+				mat[e(i, j - 1)] + ge);
+			int16_t score = mat[a(i, j)] = MAX4(0,
+				mat[a(i - 1, j - 1)] + s(i, j),
 				score_f, score_e);
-			max = MAX2(max, score);
+			if(score >= max.score) { max = (maxpos_t){ score, i, j }; }
 		}
 	}
+	if(max.score == 0) { max = (maxpos_t){ 0, 0, 0 }; }
+
+	sw_result_t result = {
+		.score = max.score,
+		.apos = max.apos,
+		.bpos = max.bpos,
+		.path_length = max.apos + max.bpos + 1,
+		.path = malloc(max.apos + max.bpos + 1)
+	};
+	uint32_t path_index = max.apos + max.bpos + 1;
+	while(max.apos != 0 && max.bpos != 0) {
+		if(mat[a(max.apos, max.bpos)] == mat[e(max.apos, max.bpos)]) {
+			while(mat[f(max.apos, max.bpos)] == mat[e(max.apos, max.bpos - 1)] + ge) {
+				max.bpos--;
+				result.path[--path_index] = 'I';
+			}
+			max.bpos--;
+			result.path[--path_index] = 'I';
+		} else if(mat[a(max.apos, max.bpos)] == mat[f(max.apos, max.bpos)]) {
+			while(mat[e(max.apos, max.bpos)] == mat[f(max.apos - 1, max.bpos)] + ge) {
+				max.apos--;
+				result.path[--path_index] = 'D';
+			}
+			max.apos--;
+			result.path[--path_index] = 'D';
+		} else {
+			if(mat[a(max.apos, max.bpos)] == 0) {
+				break;
+			}
+			if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos - 1)] + x) {
+				result.path[--path_index] = 'X';
+			} else {
+				result.path[--path_index] = 'M';
+			}
+			max.apos--;
+			max.bpos--;
+		}
+	}
+
+	result.path_length -= path_index;
+	for(uint64_t i = 0; i < result.path_length; i++) {
+		result.path[i] = result.path[path_index++];
+	}
+	result.path[result.path_length] = '\0';
+
 	free(mat);
 
 	#undef a
 	#undef f
 	#undef e
 	#undef s
-	return((sw_result_t){ .score = max });
+	return(result);
 }
 
 #ifdef TEST
@@ -121,31 +209,47 @@ static int8_t const t[][5] = {
 
 void test_linear_1_1_1(void)
 {
-	#define l(p, q)		_linear(p, q, t[0]).score
-	assert( 0 == l("", ""));
-	assert( 0 == l("A", ""));
-	assert( 1 == l("A", "A"));
-	assert( 3 == l("AAA", "AAA"));
-	assert( 0 == l("AAA", "TTT"));
-	assert( 3 == l("GGGAAAGGG", "TTTTTTAAATTTTTT"));
+	#define l(s, ap, bp, aln, p, q) { \
+		sw_result_t r = _linear(p, q, t[0]); \
+		assert(r.score == (s)); \
+		assert(r.apos == (ap)); \
+		assert(r.bpos == (bp)); \
+		assert(r.path_length == strlen(aln)); \
+		assert(strcmp(r.path, aln) == 0); \
+		if(r.path != NULL) { free(r.path); } \
+	}
+	l( 0,  0,  0, "", "", "");
+	l( 0,  0,  0, "", "A", "");
+	l( 1,  1,  1, "M", "A", "A");
+	l( 3,  3,  3, "MMM", "AAA", "AAA");
+	l( 0,  0,  0, "", "AAA", "TTT");
+	l( 3,  6,  9, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
 
-	assert( 5 == l("GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
-	assert( 4 == l("GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
+	l( 5, 10, 13, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	l( 4, 11, 13, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
 	#undef l
 }
 
 void test_affine_1_1_1(void)
 {
-	#define a(p, q)		_affine(p, q, t[0]).score
-	assert( 0 == a("", ""));
-	assert( 0 == a("A", ""));
-	assert( 1 == a("A", "A"));
-	assert( 3 == a("AAA", "AAA"));
-	assert( 0 == a("AAA", "TTT"));
-	assert( 3 == a("GGGAAAGGG", "TTTTTTAAATTTTTT"));
+	#define a(s, ap, bp, aln, p, q) { \
+		sw_result_t r = _affine(p, q, t[0]); \
+		assert(r.score == (s)); \
+		assert(r.apos == (ap)); \
+		assert(r.bpos == (bp)); \
+		assert(r.path_length == strlen(aln)); \
+		assert(strcmp(r.path, aln) == 0); \
+		if(r.path != NULL) { free(r.path); } \
+	}
+	a( 0,  0,  0, "", "", "");
+	a( 0,  0,  0, "", "A", "");
+	a( 1,  1,  1, "M", "A", "A");
+	a( 3,  3,  3, "MMM", "AAA", "AAA");
+	a( 0,  0,  0, "", "AAA", "TTT");
+	a( 3,  6,  9, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
 
-	assert( 4 == a("GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
-	assert( 3 == a("GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT"));
+	a( 4, 10, 13, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	a( 3, 11, 13, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
 	#undef a
 }
 
