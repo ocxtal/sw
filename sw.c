@@ -152,14 +152,14 @@ sw_result_t sw_affine(
 	uint32_t path_index = max.apos + max.bpos + 1;
 	while(max.apos != 0 && max.bpos != 0) {
 		if(mat[a(max.apos, max.bpos)] == mat[e(max.apos, max.bpos)]) {
-			while(mat[f(max.apos, max.bpos)] == mat[e(max.apos, max.bpos - 1)] + ge) {
+			while(mat[e(max.apos, max.bpos)] == mat[e(max.apos, max.bpos - 1)] + ge) {
 				max.bpos--;
 				result.path[--path_index] = 'I';
 			}
 			max.bpos--;
 			result.path[--path_index] = 'I';
 		} else if(mat[a(max.apos, max.bpos)] == mat[f(max.apos, max.bpos)]) {
-			while(mat[e(max.apos, max.bpos)] == mat[f(max.apos - 1, max.bpos)] + ge) {
+			while(mat[f(max.apos, max.bpos)] == mat[f(max.apos - 1, max.bpos)] + ge) {
 				max.apos--;
 				result.path[--path_index] = 'D';
 			}
