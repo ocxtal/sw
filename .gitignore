@@ -1,2 +1,6 @@
 a.out
 .DS_Store
+.waf*
+.lock-waf*
+build/
+

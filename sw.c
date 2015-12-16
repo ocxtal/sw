@@ -224,6 +224,7 @@ void test_linear_1_1_1(void)
 	l( 3,  3,  3, "MMM", "AAA", "AAA");
 	l( 0,  0,  0, "", "AAA", "TTT");
 	l( 3,  6,  9, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
+	l( 4,  12, 15, "MMMM", "TTTGGGGGAAAA", "TTTCCCCCCCCAAAA");
 
 	l( 5, 10, 13, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
 	l( 4, 11, 13, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
