@@ -1,5 +1,6 @@
 
 # sw -- simple Smith-Waterman implementation
+## 目的
 
 [![Build Status](https://travis-ci.org/ocxtal/sw.svg?branch=master)](https://travis-ci.org/ocxtal/sw)
 
