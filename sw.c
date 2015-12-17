@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
 				uint64_t _size = 64, _len = 0; \
 				char *_ptr = malloc(_size); \
 				char _c; \
-				while((_c = getc(file)) != (delim)) { \
+				while((_c = getc(file)) != (delim) && _c != EOF) { \
 					_ptr[_len++] = (char)c; \
 					if(_len >= _size - 1) { \
 						_ptr = realloc(_ptr, _size *= 2); \
