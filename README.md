@@ -34,3 +34,7 @@ Cコンパイラ (C99に対応したもの) と、python (2 or 3) が必要で�
 		result.path);
 
 	free(result.path);			/* result.path must be freed with stdlib.free */
+
+## ライセンス
+
+MIT
