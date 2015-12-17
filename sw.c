@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 			free(a);
 			free(b);
 		}
-	} while(input_mode != ARGS && feof(stdin) != EOF);
+	} while(input_mode != ARGS && !feof(stdin));
 
 	return(0);
 }
