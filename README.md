@@ -23,10 +23,13 @@ Cコンパイラ (C99に対応したもの) と、python (2 or 3) が必要で�
 		seq_b, strlen(seq_b),	/* seq_b and its length */
 		2, -3, -5, -1);			/* match, mismatch, gapopen, gapextend */
 
-	printf("score\t%d\npos\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
+	printf("score\t%d\npos\t(%llu, %llu)\n"
+		"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
 		result.score,
 		result.apos,
 		result.bpos,
+		result.alen,
+		result.blen,
 		result.path_length,
 		result.path);
 
