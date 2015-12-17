@@ -11,6 +11,7 @@ typedef struct _sw_result {
 	int score;
 	uint32_t path_length;
 	uint64_t apos, bpos;
+	uint64_t alen, blen;
 	char *path;
 } sw_result_t;
 

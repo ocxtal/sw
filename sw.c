@@ -63,27 +63,29 @@ sw_result_t sw_linear(
 		.path = malloc(max.apos + max.bpos + 1)
 	};
 	uint32_t path_index = max.apos + max.bpos + 1;
-	while(max.apos != 0 && max.bpos != 0) {
-		if(mat[a(max.apos, max.bpos)] == mat[a(max.apos, max.bpos - 1)] + ge) {
-			max.bpos--;
+	while(result.apos != 0 && result.bpos != 0) {
+		if(mat[a(result.apos, result.bpos)] == mat[a(result.apos, result.bpos - 1)] + ge) {
+			result.bpos--;
 			result.path[--path_index] = 'I';
-		} else if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos)] + ge) {
-			max.apos--;
+		} else if(mat[a(result.apos, result.bpos)] == mat[a(result.apos - 1, result.bpos)] + ge) {
+			result.apos--;
 			result.path[--path_index] = 'D';
 		} else {
-			if(mat[a(max.apos, max.bpos)] == 0) {
+			if(mat[a(result.apos, result.bpos)] == 0) {
 				break;
 			}
-			if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos - 1)] + x) {
+			if(mat[a(result.apos, result.bpos)] == mat[a(result.apos - 1, result.bpos - 1)] + x) {
 				result.path[--path_index] = 'X';
 			} else {
 				result.path[--path_index] = 'M';
 			}
-			max.apos--;
-			max.bpos--;
+			result.apos--;
+			result.bpos--;
 		}
 	}
 
+	result.alen = max.apos - result.apos;
+	result.blen = max.bpos - result.bpos;
 	result.path_length -= path_index;
 	for(uint64_t i = 0; i < result.path_length; i++) {
 		result.path[i] = result.path[path_index++];
@@ -150,35 +152,37 @@ sw_result_t sw_affine(
 		.path = malloc(max.apos + max.bpos + 1)
 	};
 	uint32_t path_index = max.apos + max.bpos + 1;
-	while(max.apos != 0 && max.bpos != 0) {
-		if(mat[a(max.apos, max.bpos)] == mat[e(max.apos, max.bpos)]) {
-			while(mat[e(max.apos, max.bpos)] == mat[e(max.apos, max.bpos - 1)] + ge) {
-				max.bpos--;
+	while(result.apos != 0 && result.bpos != 0) {
+		if(mat[a(result.apos, result.bpos)] == mat[e(result.apos, result.bpos)]) {
+			while(mat[e(result.apos, result.bpos)] == mat[e(result.apos, result.bpos - 1)] + ge) {
+				result.bpos--;
 				result.path[--path_index] = 'I';
 			}
-			max.bpos--;
+			result.bpos--;
 			result.path[--path_index] = 'I';
-		} else if(mat[a(max.apos, max.bpos)] == mat[f(max.apos, max.bpos)]) {
-			while(mat[f(max.apos, max.bpos)] == mat[f(max.apos - 1, max.bpos)] + ge) {
-				max.apos--;
+		} else if(mat[a(result.apos, result.bpos)] == mat[f(result.apos, result.bpos)]) {
+			while(mat[f(result.apos, result.bpos)] == mat[f(result.apos - 1, result.bpos)] + ge) {
+				result.apos--;
 				result.path[--path_index] = 'D';
 			}
-			max.apos--;
+			result.apos--;
 			result.path[--path_index] = 'D';
 		} else {
-			if(mat[a(max.apos, max.bpos)] == 0) {
+			if(mat[a(result.apos, result.bpos)] == 0) {
 				break;
 			}
-			if(mat[a(max.apos, max.bpos)] == mat[a(max.apos - 1, max.bpos - 1)] + x) {
+			if(mat[a(result.apos, result.bpos)] == mat[a(result.apos - 1, result.bpos - 1)] + x) {
 				result.path[--path_index] = 'X';
 			} else {
 				result.path[--path_index] = 'M';
 			}
-			max.apos--;
-			max.bpos--;
+			result.apos--;
+			result.bpos--;
 		}
 	}
 
+	result.alen = max.apos - result.apos;
+	result.blen = max.bpos - result.bpos;
 	result.path_length -= path_index;
 	for(uint64_t i = 0; i < result.path_length; i++) {
 		result.path[i] = result.path[path_index++];
@@ -209,48 +213,52 @@ static int8_t const t[][5] = {
 
 void test_linear_1_1_1(void)
 {
-	#define l(s, ap, bp, aln, p, q) { \
+	#define l(s, ap, bp, al, bl, aln, p, q) { \
 		sw_result_t r = _linear(p, q, t[0]); \
 		assert(r.score == (s)); \
 		assert(r.apos == (ap)); \
 		assert(r.bpos == (bp)); \
+		assert(r.alen == (al)); \
+		assert(r.blen == (bl)); \
 		assert(r.path_length == strlen(aln)); \
 		assert(strcmp(r.path, aln) == 0); \
 		if(r.path != NULL) { free(r.path); } \
 	}
-	l( 0,  0,  0, "", "", "");
-	l( 0,  0,  0, "", "A", "");
-	l( 1,  1,  1, "M", "A", "A");
-	l( 3,  3,  3, "MMM", "AAA", "AAA");
-	l( 0,  0,  0, "", "AAA", "TTT");
-	l( 3,  6,  9, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
-	l( 4,  12, 15, "MMMM", "TTTGGGGGAAAA", "TTTCCCCCCCCAAAA");
+	l( 0,  0,  0,  0,  0, "", "", "");
+	l( 0,  0,  0,  0,  0, "", "A", "");
+	l( 1,  0,  0,  1,  1, "M", "A", "A");
+	l( 3,  0,  0,  3,  3, "MMM", "AAA", "AAA");
+	l( 0,  0,  0,  0,  0, "", "AAA", "TTT");
+	l( 3,  3,  6,  3,  3, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
+	l( 4,  8, 11,  4,  4, "MMMM", "TTTGGGGGAAAA", "TTTCCCCCCCCAAAA");
 
-	l( 5, 10, 13, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
-	l( 4, 11, 13, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	l( 5,  3,  7,  7,  6, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	l( 4,  3,  7,  8,  6, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
 	#undef l
 }
 
 void test_affine_1_1_1(void)
 {
-	#define a(s, ap, bp, aln, p, q) { \
+	#define a(s, ap, bp, al, bl, aln, p, q) { \
 		sw_result_t r = _affine(p, q, t[0]); \
 		assert(r.score == (s)); \
 		assert(r.apos == (ap)); \
 		assert(r.bpos == (bp)); \
+		assert(r.alen == (al)); \
+		assert(r.blen == (bl)); \
 		assert(r.path_length == strlen(aln)); \
 		assert(strcmp(r.path, aln) == 0); \
 		if(r.path != NULL) { free(r.path); } \
 	}
-	a( 0,  0,  0, "", "", "");
-	a( 0,  0,  0, "", "A", "");
-	a( 1,  1,  1, "M", "A", "A");
-	a( 3,  3,  3, "MMM", "AAA", "AAA");
-	a( 0,  0,  0, "", "AAA", "TTT");
-	a( 3,  6,  9, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
+	a( 0,  0,  0,  0,  0, "", "", "");
+	a( 0,  0,  0,  0,  0, "", "A", "");
+	a( 1,  0,  0,  1,  1, "M", "A", "A");
+	a( 3,  0,  0,  3,  3, "MMM", "AAA", "AAA");
+	a( 0,  0,  0,  0,  0, "", "AAA", "TTT");
+	a( 3,  3,  6,  3,  3, "MMM", "GGGAAAGGG", "TTTTTTAAATTTTTT");
 
-	a( 4, 10, 13, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
-	a( 3, 11, 13, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	a( 4,  3,  7,  7,  6, "MMMDMMM", "GGGAAACAAAGGG", "TTTTTTTAAAAAATTTTTTT");
+	a( 3,  3,  7,  8,  6, "MMMDDMMM", "GGGAAACCAAAGGG", "TTTTTTTAAAAAATTTTTTT");
 	#undef a
 }
 
