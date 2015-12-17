@@ -218,14 +218,18 @@ int main(int argc, char *argv[])
 {
 	int c;
 	int8_t t[5] = {2, -3, -5, -1};
+	enum _mode { SCORE, PATH, ALL } mode = ALL;
 
-	while((c = getopt(argc, argv, "m:x:o:e:h")) != -1) {
+	while((c = getopt(argc, argv, "m:x:o:e:hspa")) != -1) {
 		switch(c) {
 			case 'm': t[0] = atoi(optarg); break;
 			case 'x': t[1] = atoi(optarg); break;
 			case 'o': t[2] = atoi(optarg); break;
 			case 'e': t[3] = atoi(optarg); break;
 			case 'h': print_help(); exit(1);
+			case 's': mode = SCORE; break;
+			case 'p': mode = PATH; break;
+			case 'a': mode = ALL; break;
 			default:
 				fprintf(stderr, "[error] invalid option flag.\n");
 				exit(1);
@@ -243,20 +247,26 @@ int main(int argc, char *argv[])
 		argv[optind+1], strlen(argv[optind+1]),
 		t[0], t[1], t[2], t[3]);
 
-	printf("score\t%d\npos\t(%llu, %llu)\n"
-		"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
-		result.score,
-		result.apos,
-		result.bpos,
-		result.alen,
-		result.blen,
-		result.path_length,
-		result.path);
+	switch(mode) {
+		case SCORE: printf("%d\n", result.score); break;
+		case PATH: printf("%s\n", result.path); break;
+		case ALL:
+			printf("score\t%d\npos\t(%llu, %llu)\n"
+				"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
+				result.score,
+				result.apos,
+				result.bpos,
+				result.alen,
+				result.blen,
+				result.path_length,
+				result.path);
+			break;
+		default: break;
+	}
 
 	free(result.path);
 	return(0);
 }
-
 #endif
 
 #ifdef TEST
