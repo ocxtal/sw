@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 	enum _print_mode { SCORE, PATH, ALL } print_mode = ALL;
 	enum _input_mode { ARGS, STDIN } input_mode = ARGS;
 
-	if(isatty(fileno(stdin))) {
+	if(!isatty(fileno(stdin))) {
 		/* stdin mode : two sequences must be separated by '\n' */
 		input_mode = STDIN;
 	}
