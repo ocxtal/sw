@@ -218,53 +218,89 @@ int main(int argc, char *argv[])
 {
 	int c;
 	int8_t t[5] = {2, -3, -5, -1};
-	enum _mode { SCORE, PATH, ALL } mode = ALL;
+	enum _print_mode { SCORE, PATH, ALL } print_mode = ALL;
+	enum _input_mode { ARGS, STDIN } input_mode = ARGS;
 
-	while((c = getopt(argc, argv, "m:x:o:e:hspa")) != -1) {
+	if(isatty(fileno(stdin))) {
+		/* stdin mode : two sequences must be separated by '\n' */
+		input_mode = STDIN;
+	}
+
+	while((c = getopt(argc, argv, "m:x:o:e:hspaP")) != -1) {
 		switch(c) {
 			case 'm': t[0] = atoi(optarg); break;
 			case 'x': t[1] = atoi(optarg); break;
 			case 'o': t[2] = atoi(optarg); break;
 			case 'e': t[3] = atoi(optarg); break;
 			case 'h': print_help(); exit(1);
-			case 's': mode = SCORE; break;
-			case 'p': mode = PATH; break;
-			case 'a': mode = ALL; break;
+			case 's': print_mode = SCORE; break;
+			case 'p': print_mode = PATH; break;
+			case 'a': print_mode = ALL; break;
+			case 'P': input_mode = STDIN; break;
 			default:
 				fprintf(stderr, "[error] invalid option flag.\n");
 				exit(1);
 		}
 	}
 
-	if(argc - optind != 2) {
+	if(input_mode == ARGS && argc - optind != 2) {
 		fprintf(stderr, "[error] two sequences must be passed as argument.\n");
 		print_help();
 		exit(1);
 	}
 
-	sw_result_t result = sw_affine(
-		argv[optind], strlen(argv[optind]),
-		argv[optind+1], strlen(argv[optind+1]),
-		t[0], t[1], t[2], t[3]);
+	do {
+		char *a = NULL, *b = NULL;
 
-	switch(mode) {
-		case SCORE: printf("%d\n", result.score); break;
-		case PATH: printf("%s\n", result.path); break;
-		case ALL:
-			printf("score\t%d\npos\t(%llu, %llu)\n"
-				"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
-				result.score,
-				result.apos,
-				result.bpos,
-				result.alen,
-				result.blen,
-				result.path_length,
-				result.path);
-			break;
-		default: break;
-	}
+		if(input_mode == ARGS) {
+			a = argv[optind++];
+			b = argv[optind++];
+		} else {
+			#define read(file, delim) ({ \
+				uint64_t _size = 64, _len = 0; \
+				char *_ptr = malloc(_size); \
+				char _c; \
+				while((_c = getc(file)) != (delim)) { \
+					_ptr[_len++] = (char)c; \
+					if(_len >= _size - 1) { \
+						_ptr = realloc(_ptr, _size *= 2); \
+					} \
+				} \
+				_ptr; \
+			})
 
-	free(result.path);
+			a = read(stdin, '\n');
+			b = read(stdin, '\n');
+		}
+
+		sw_result_t result = sw_affine(
+			a, strlen(a), b, strlen(b),
+			t[0], t[1], t[2], t[3]);
+
+		switch(print_mode) {
+			case SCORE: printf("%d\n", result.score); break;
+			case PATH: printf("%s\n", result.path); break;
+			case ALL:
+				printf("score\t%d\npos\t(%llu, %llu)\n"
+					"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
+					result.score,
+					result.apos,
+					result.bpos,
+					result.alen,
+					result.blen,
+					result.path_length,
+					result.path);
+				break;
+			default: break;
+		}
+
+		free(result.path);
+		if(input_mode != ARGS) {
+			free(a);
+			free(b);
+		}
+	} while(input_mode != ARGS && getc(stdin) != EOF);
+
 	return(0);
 }
 #endif
