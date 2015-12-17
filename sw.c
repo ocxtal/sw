@@ -260,12 +260,13 @@ int main(int argc, char *argv[])
 				uint64_t _size = 64, _len = 0; \
 				char *_ptr = malloc(_size); \
 				char _c; \
-				while((_c = getc(file)) != (delim) && _c != EOF) { \
-					_ptr[_len++] = (char)c; \
+				while((_c = getc(file)) != (delim) && !feof(file)) { \
+					_ptr[_len++] = (char)_c; \
 					if(_len >= _size - 1) { \
 						_ptr = realloc(_ptr, _size *= 2); \
 					} \
 				} \
+				_ptr[_len] = '\0'; \
 				_ptr; \
 			})
 
@@ -299,7 +300,7 @@ int main(int argc, char *argv[])
 			free(a);
 			free(b);
 		}
-	} while(input_mode != ARGS && getc(stdin) != EOF);
+	} while(input_mode != ARGS && feof(stdin) != EOF);
 
 	return(0);
 }
