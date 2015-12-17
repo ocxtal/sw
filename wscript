@@ -14,5 +14,6 @@ def configure(conf):
 def build(bld):
 	bld.stlib(source = 'sw.c', target = 'sw')
 	bld.shlib(source = 'sw.c', target = 'sw')
+	bld.program(source = 'sw.c', target = 'sw', cflags = '-DMAIN')
 	bld.program(source = 'sw.c', target = 'swtest', cflags = '-DTEST')
 	bld.install_files('${PREFIX}/include', 'sw.h')
