@@ -198,6 +198,67 @@ sw_result_t sw_affine(
 	return(result);
 }
 
+#ifdef MAIN
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+void print_help(void)
+{
+	fprintf(stderr,
+		"\n"
+		"  sw -- simple Smith-Waterman\n"
+		"\n"
+		"  usage:\n"
+		"    $ sw -m 2 -x -3 -o -5 -e -1 TACTA CT\n"
+		"\n");
+	return;
+}
+
+int main(int argc, char *argv[])
+{
+	int c;
+	int8_t t[5] = {2, -3, -5, -1};
+
+	while((c = getopt(argc, argv, "m:x:o:e:h")) != -1) {
+		switch(c) {
+			case 'm': t[0] = atoi(optarg); break;
+			case 'x': t[1] = atoi(optarg); break;
+			case 'o': t[2] = atoi(optarg); break;
+			case 'e': t[3] = atoi(optarg); break;
+			case 'h': print_help(); exit(1);
+			default:
+				fprintf(stderr, "[error] invalid option flag.\n");
+				exit(1);
+		}
+	}
+
+	if(argc - optind != 2) {
+		fprintf(stderr, "[error] two sequences must be passed as argument.\n");
+		print_help();
+		exit(1);
+	}
+
+	sw_result_t result = sw_affine(
+		argv[optind], strlen(argv[optind]),
+		argv[optind+1], strlen(argv[optind+1]),
+		t[0], t[1], t[2], t[3]);
+
+	printf("score\t%d\npos\t(%llu, %llu)\n"
+		"len\t(%llu, %llu)\npath len\t%u\npath\t%s\n",
+		result.score,
+		result.apos,
+		result.bpos,
+		result.alen,
+		result.blen,
+		result.path_length,
+		result.path);
+
+	free(result.path);
+	return(0);
+}
+
+#endif
+
 #ifdef TEST
 #include <stdio.h>
 #include <assert.h>
